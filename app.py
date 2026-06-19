@@ -1,13 +1,21 @@
 import streamlit as st
+from rag.chatbot import ask_question
 
-from ui.chat_ui import render_chat
+st.set_page_config(
+    page_title="HBT AI Knowledge Assistant",
+    page_icon="🤖"
+)
 
+st.title("HBT AI Knowledge Assistant")
 
-def main():
-    st.set_page_config(page_title="HBT AI Knowledge Assistant", layout="wide")
-    st.title("HBT AI Knowledge Assistant")
-    render_chat()
+question = st.text_input(
+    "Ask a question about HBT"
+)
 
+if question:
 
-if __name__ == "__main__":
-    main()
+    with st.spinner("Thinking..."):
+
+        answer = ask_question(question)
+
+    st.write(answer)
