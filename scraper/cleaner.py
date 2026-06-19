@@ -1,29 +1,53 @@
+import os
 import re
 
-INPUT_FILE = "data/raw/technology_services.txt"
-OUTPUT_FILE = "data/processed/clean_text.txt"
+INPUT_FOLDER = "data/processed"
 
-with open(INPUT_FILE, "r", encoding="utf-8") as f:
-    text = f.read()
+for filename in os.listdir(INPUT_FOLDER):
 
-# Remove excessive blank lines
-text = re.sub(r"\n{2,}", "\n", text)
+    if filename.endswith(".txt"):
 
-# Remove common unwanted phrases
-unwanted = [
-    "Manage Cookie Consent",
-    "Cookie Policy",
-    "Accept",
-    "Deny",
-    "View preferences",
-    "Manage consent",
-    "Skip to content",
-]
+        path = os.path.join(
+            INPUT_FOLDER,
+            filename
+        )
 
-for item in unwanted:
-    text = text.replace(item, "")
+        with open(
+            path,
+            "r",
+            encoding="utf-8"
+        ) as f:
 
-with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-    f.write(text)
+            text = f.read()
 
-print("Cleaned text saved.")
+        unwanted = [
+            "Cookie Policy",
+            "Manage Cookie Consent",
+            "Accept",
+            "Deny",
+            "View preferences",
+            "Skip to content"
+        ]
+
+        for item in unwanted:
+
+            text = text.replace(
+                item,
+                ""
+            )
+
+        text = re.sub(
+            r"\n{2,}",
+            "\n",
+            text
+        )
+
+        with open(
+            path,
+            "w",
+            encoding="utf-8"
+        ) as f:
+
+            f.write(text)
+
+print("Cleaning completed.")

@@ -1,26 +1,65 @@
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import urljoin
+
+BASE_URL = "https://hbt-group.com"
+START_URL = "https://hbt-group.com/aftermarket-services/technology-services/"
 
 
-def crawl_site(base_url, max_pages=50):
-    """Crawl HBT pages and collect URLs to scrape."""
-    urls = {base_url}
-    visited = set()
+def get_service_links():
+    try:
+        response = requests.get(
+            START_URL,
+            timeout=10,
+            headers={
+                "User-Agent": "Mozilla/5.0"
+            }
+        )
 
-    while urls and len(visited) < max_pages:
-        url = urls.pop()
-        visited.add(url)
-        try:
-            response = requests.get(url, timeout=10)
-            response.raise_for_status()
-        except requests.RequestException:
-            continue
+        response.raise_for_status()
 
-        soup = BeautifulSoup(response.text, "html.parser")
-        for link in soup.find_all("a", href=True):
-            href = link["href"]
-            if href.startswith("http") and "hbt" in href:
-                if href not in visited:
-                    urls.add(href)
+        soup = BeautifulSoup(
+            response.text,
+            "html.parser"
+        )
 
-    return list(visited)
+        urls = set()
+
+        # Always include main page
+        urls.add(START_URL)
+
+        for tag in soup.find_all("a", href=True):
+
+            href = tag["href"]
+
+            full_url = urljoin(
+                BASE_URL,
+                href
+            )
+
+            # Remove URL fragments
+            full_url = full_url.split("#")[0]
+
+            # Only Technology Services pages
+            if full_url.startswith(
+                "https://hbt-group.com/aftermarket-services/technology-services/"
+            ):
+                urls.add(full_url)
+
+        return sorted(list(urls))
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return []
+
+
+if __name__ == "__main__":
+
+    urls = get_service_links()
+
+    print("\nDiscovered URLs:\n")
+
+    for url in urls:
+        print(url)
+
+    print(f"\nTotal URLs Found: {len(urls)}")

@@ -1,55 +1,80 @@
 import requests
-from bs4 import BeautifulSoup
 import os
 import json
+
+from bs4 import BeautifulSoup
 from datetime import datetime
 
-URL = "https://hbt-group.com/aftermarket-services/technology-services/"
+from crawler import get_service_links
 
-response = requests.get(URL)
-
-# Create folders
 os.makedirs("data/raw", exist_ok=True)
 os.makedirs("data/processed", exist_ok=True)
 os.makedirs("data/metadata", exist_ok=True)
 
-# 1. Save Raw HTML
-with open(
-    "data/raw/technology_services.html",
-    "w",
-    encoding="utf-8"
-) as f:
-    f.write(response.text)
+urls = get_service_links()
 
-# Parse HTML
-soup = BeautifulSoup(response.text, "html.parser")
+for index, url in enumerate(urls):
 
-# 2. Extract Clean Text
-text = soup.get_text(
-    separator="\n",
-    strip=True
-)
+    try:
 
-with open(
-    "data/processed/technology_services.txt",
-    "w",
-    encoding="utf-8"
-) as f:
-    f.write(text)
+        response = requests.get(url)
 
-# 3. Save Metadata
-metadata = {
-    "url": URL,
-    "title": soup.title.text if soup.title else "No Title",
-    "scraped_at": str(datetime.now()),
-    "content_length": len(text)
-}
+        soup = BeautifulSoup(
+            response.text,
+            "html.parser"
+        )
 
-with open(
-    "data/metadata/technology_services.json",
-    "w",
-    encoding="utf-8"
-) as f:
-    json.dump(metadata, f, indent=4)
+        file_name = f"page_{index}"
 
-print("Scraping completed successfully!")
+        # RAW HTML
+        with open(
+            f"data/raw/{file_name}.html",
+            "w",
+            encoding="utf-8"
+        ) as f:
+
+            f.write(response.text)
+
+        # CLEAN TEXT
+        text = soup.get_text(
+            separator="\n",
+            strip=True
+        )
+
+        with open(
+            f"data/processed/{file_name}.txt",
+            "w",
+            encoding="utf-8"
+        ) as f:
+
+            f.write(text)
+
+        # METADATA
+        metadata = {
+            "url": url,
+            "title": soup.title.text if soup.title else "",
+            "scraped_at": str(datetime.now()),
+            "content_length": len(text)
+        }
+
+        with open(
+            f"data/metadata/{file_name}.json",
+            "w",
+            encoding="utf-8"
+        ) as f:
+
+            json.dump(
+                metadata,
+                f,
+                indent=4
+            )
+
+        print(f"Saved: {file_name}")
+
+    except Exception as e:
+
+        print(
+            f"Error scraping {url}"
+        )
+
+        print(e)
