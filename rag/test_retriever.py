@@ -4,4 +4,6 @@ results = retrieve_context(
     "What services does HBT provide?"
 )
 
-print(results)
+for i, doc in enumerate(results["documents"][0], 1):
+    print(f"\n--- Result {i} ---")
+    print(doc[:500])
