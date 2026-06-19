@@ -1,35 +1,17 @@
 import chromadb
+from sentence_transformers import SentenceTransformer
 
-from sentence_transformers import (
-    SentenceTransformer
-)
+model = SentenceTransformer("all-MiniLM-L6-v2")
 
-model = SentenceTransformer(
-    "all-MiniLM-L6-v2"
-)
+client = chromadb.PersistentClient(path="chroma_db")
+collection = client.get_collection("hbt_knowledge")
 
-client = chromadb.PersistentClient(
-    path="chroma_db"
-)
 
-collection = client.get_collection(
-    "hbt_knowledge"
-)
-
-def retrieve_context(
-    question,
-    top_k=5
-):
-
-    question_embedding = model.encode(
-        question
-    ).tolist()
-
+def retrieve_context(question: str, top_k: int = 5):
+    embedding = model.encode(question).tolist()
     results = collection.query(
-        query_embeddings=[
-            question_embedding
-        ],
-        n_results=top_k
+        query_embeddings=[embedding],
+        n_results=top_k,
+        include=["documents", "metadatas", "distances"],
     )
-
     return results
