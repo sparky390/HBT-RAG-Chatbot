@@ -1,3 +1,5 @@
+from typing import List, Optional, Tuple
+
 NOT_FOUND_MESSAGE = "I could not find relevant information in the knowledge base."
 
 
@@ -11,7 +13,12 @@ def build_context_block(documents, metadatas) -> str:
     return "\n\n---\n\n".join(parts)
 
 
-def build_prompt(question: str, context: str, enumeration: bool = False) -> str:
+def build_prompt(
+    question: str,
+    context: str,
+    enumeration: bool = False,
+    history: Optional[List[Tuple[str, str]]] = None,
+) -> str:
     completeness_hint = (
         "\n- This question asks for a full list/category enumeration. "
         "Check EVERY [Source: ...] block above and include every distinct "
@@ -19,6 +26,16 @@ def build_prompt(question: str, context: str, enumeration: bool = False) -> str:
         "block or summarize down to a partial subset."
         if enumeration else ""
     )
+
+    history_block = ""
+    if history:
+        last_q, last_a = history[-1]
+        history_block = (
+            f"\nPREVIOUS EXCHANGE (use ONLY to resolve references like "
+            f"\"it\", \"that\", \"the first one\" — never as a source of facts):\n"
+            f"User: {last_q}\nAssistant: {last_a}\n"
+        )
+
     return f"""You are an AI Knowledge Assistant for HBT Technology Services.
 
 Answer the question using ONLY the information in CONTEXT below.
@@ -30,7 +47,7 @@ Rules:
 - Ignore navigation text, "Click here", stray numbers/counters, or other non-substantive fragments if they appear in the context.
 - Be concise, factual, and professional. Do not pad the answer with generic marketing language that isn't in the context.
 - If CONTEXT does not contain the answer, respond with EXACTLY this sentence and nothing else: "{NOT_FOUND_MESSAGE}"
-
+{history_block}
 CONTEXT:
 {context}
 

@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple
 
 from rag.retriever import retrieve_context, is_enumeration_query, warmup
 from rag.prompt_builder import build_context_block, build_prompt, NOT_FOUND_MESSAGE
@@ -60,17 +60,29 @@ def ask_question(question: str, top_k: int = DEFAULT_TOP_K) -> str:
     return result.answer
 
 
-def ask_question_detailed(question: str, top_k: int = DEFAULT_TOP_K) -> AnswerResult:
+def ask_question_detailed(
+    question: str,
+    top_k: int = DEFAULT_TOP_K,
+    history: Optional[List[Tuple[str, str]]] = None,
+) -> AnswerResult:
     enumeration = is_enumeration_query(question)
     effective_top_k = top_k + 3 if enumeration else top_k
 
-    results = retrieve_context(question, top_k=effective_top_k)
+    # Enrich the *retrieval* query with the last exchange so follow-ups like
+    # "tell about the first one" can still find the right chunks — the LLM
+    # still answers the original `question`, not this expanded version.
+    retrieval_query = question
+    if history:
+        last_q, last_a = history[-1]
+        retrieval_query = f"{last_q} {last_a} {question}"
+
+    results = retrieve_context(retrieval_query, top_k=effective_top_k)
 
     if not results["documents"]:
         return AnswerResult(answer=NOT_FOUND_MESSAGE, sources=[], grounded=True)
 
     context = _assemble_context(results["documents"], results["metadatas"])
-    prompt = build_prompt(question, context, enumeration)
+    prompt = build_prompt(question, context, enumeration, history=history)
 
     answer = generate_response(prompt).strip()
 

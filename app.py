@@ -138,13 +138,18 @@ if uploaded_pdf:
 user_input = user_input or pending
 
 if user_input:
+    history = None
+    msgs = st.session_state.messages
+    if len(msgs) >= 2 and msgs[-1]["role"] == "assistant" and msgs[-2]["role"] == "user":
+        history = [(msgs[-2]["content"], msgs[-1]["content"])]
+
     st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
         st.write(user_input)
 
     with st.chat_message("assistant"):
         with st.spinner("Searching knowledge base..."):
-            result = ask_question_detailed(user_input)
+            result = ask_question_detailed(user_input, history=history)
         st.write(result.answer)
 
         if result.answer != NOT_FOUND_MESSAGE:
