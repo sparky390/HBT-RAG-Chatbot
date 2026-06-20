@@ -39,6 +39,12 @@ def _get_collection():
     return _collection
 
 
+def warmup():
+    """Preload embedding and vector store resources at startup."""
+    _get_model()
+    _get_collection()
+
+
 def _distance_to_similarity(distance: float) -> float:
     similarity = 1.0 - distance
     return max(0.0, min(1.0, similarity))
