@@ -1,6 +1,6 @@
 import streamlit as st
 
-from rag.chatbot import ask_question_detailed, NOT_FOUND_MESSAGE
+from rag.chatbot import ask_question_detailed, NOT_FOUND_MESSAGE, warmup
 
 st.set_page_config(
     page_title="HBT AI Knowledge Assistant",
@@ -10,6 +10,8 @@ st.set_page_config(
 
 st.title("🤖 HBT AI Knowledge Assistant")
 st.caption("Answers grounded in HBT Technology Services website content.")
+
+warmup()
 
 if "messages" not in st.session_state:
     st.session_state.messages = []

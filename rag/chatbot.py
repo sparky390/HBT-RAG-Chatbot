@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Dict, List
 
-from rag.retriever import retrieve_context, is_enumeration_query
+from rag.retriever import retrieve_context, is_enumeration_query, warmup
 from rag.prompt_builder import build_context_block, build_prompt, NOT_FOUND_MESSAGE
 from llm.ollama_client import generate_response
 
