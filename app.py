@@ -38,6 +38,9 @@ if "messages" not in st.session_state:
 if "feedback" not in st.session_state:
     st.session_state.feedback = {}
 
+if "ingested_pdfs" not in st.session_state:
+    st.session_state.ingested_pdfs = set()
+
 
 def render_sources(sources):
     if not sources:
@@ -100,12 +103,33 @@ with st.sidebar:
         st.session_state.feedback = {}
         st.rerun()
 
-    
     st.caption(
         "Answers are generated strictly from retrieved website content. "
         "If nothing relevant is found, the assistant will say so instead "
         "of guessing."
     )
+
+
+# PDF Upload (above chat input)
+with st.expander("📄 Upload PDF Brochure", expanded=False):
+    uploaded_pdf = st.file_uploader(
+        "Upload a company brochure",
+        type=["pdf"],
+        label_visibility="collapsed",
+    )
+    if uploaded_pdf:
+        if uploaded_pdf.name not in st.session_state.ingested_pdfs:
+            if st.button("Ingest PDF", use_container_width=True):
+                from embeddings.pdf_ingestor import ingest_pdf
+                with st.spinner(f"Processing {uploaded_pdf.name}..."):
+                    count = ingest_pdf(uploaded_pdf, uploaded_pdf.name)
+                if count:
+                    st.session_state.ingested_pdfs.add(uploaded_pdf.name)
+                    st.success(f"✅ Added {count} chunks from '{uploaded_pdf.name}'")
+                else:
+                    st.error("Could not extract text from PDF.")
+        else:
+            st.success(f"✅ '{uploaded_pdf.name}' already ingested this session.")
 
 
 # Input
